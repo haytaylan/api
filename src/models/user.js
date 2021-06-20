@@ -18,7 +18,7 @@ const UserSchema = new mongoose.Schema(
         },
         avatar: {
             type: String
-        }
+        },
     },
     {
         // Assigns createdAt and updatedAt fields with a Date type
