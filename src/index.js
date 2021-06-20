@@ -4,7 +4,11 @@ const models = require('./models');
 const typeDefs = require('./schema');
 const resolvers = require('./resolvers');
 const jwt = require('jsonwebtoken');
+const helmet = require('helmet')
+const cors = require('cors');
 const express = require('express');
+const depthLimit = require('graphql-depth-limit');
+const { createComplexityLimitRule } = require('graphql-validation-complexity');
 const { ApolloServer } = require('apollo-server-express');
 
 
@@ -36,19 +40,21 @@ const getUser = token => {
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: ({ req }) => {
+  validationRules: [depthLimit(5), createComplexityLimitRule(1000)],
+  context: async ({ req }) => {
     // get the user token from the headers
     const token = req.headers.authorization;
     // try to retrieve a user with the token
-    const user = getUser(token);
-    // for now, let's log the user to the console:
-    console.log(user);
+    const user = await getUser(token);
     // add the db models and the user to the context
     return { models, user };
   }
 });
 server.applyMiddleware({ app, path: '/api' });
 
+
+app.use(helmet());
+app.use(cors())
 app.listen({ port }, () =>
   console.log(
     `GraphQL Server running at http://localhost:${port}${server.graphqlPath}`
